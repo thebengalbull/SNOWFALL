@@ -2907,31 +2907,52 @@ sendCustomerOrderEmail(orderEmailData);
 
 
 
-// Function to send order confirmation email to CUSTOMER
+// Function to send receipt to CUSTOMER using FormSubmit.co
 function sendCustomerOrderEmail(orderData) {
-    const templateParams = {
-        order_number: orderData.orderNumber,
-        order_date: orderData.orderDate,
-        customer_name: orderData.customerName,
-        customer_email: orderData.customerEmail,
-        customer_phone: orderData.customerPhone,
-        order_items: orderData.orderItems,
-        subtotal: orderData.subtotal,
-        shipping: orderData.shipping,
-        discount: orderData.discount,
-        total: orderData.total,
-        shipping_address: orderData.shippingAddress,
-        payment_method: orderData.paymentMethod
-    };
-    
-    emailjs.send(EMAILJS_SERVICE_ID, 'YOUR_CUSTOMER_TEMPLATE_ID', templateParams)
-        .then(function(response) {
-            console.log('✅ Customer order email sent to:', orderData.customerEmail, response.status);
+    fetch('https://formsubmit.co/ajax/kawsar2783@gmail.com', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            _subject: `🎉 Your SNOWFALL Order Confirmation - ${orderData.orderNumber}`,
+            _autoresponse: `
+🎉 THANK YOU FOR YOUR ORDER FROM SNOWFALL! 🎉
+
+Order Number: ${orderData.orderNumber}
+Order Date: ${orderData.orderDate}
+Total Paid: ${orderData.total}
+
+📦 YOUR ORDER ITEMS:
+${orderData.orderItems}
+
+💰 PAYMENT SUMMARY:
+Subtotal: ${orderData.subtotal}
+Shipping: ${orderData.shipping}
+Total: ${orderData.total}
+
+🚚 SHIPPING ADDRESS:
+${orderData.shippingAddress}
+
+💳 PAYMENT METHOD:
+${orderData.paymentMethod}
+
+Thank you for shopping at SNOWFALL! ❄️
+            `,
+            _autoresponse_from: 'SNOWFALL Orders',
+            _replyto: 'kawsar2783@gmail.com',
+            email: orderData.customerEmail
         })
-        .catch(function(error) {
-            console.log('❌ Failed to send customer email:', error);
-        });
+    })
+    .then(response => {
+        if (response.ok) {
+            console.log('✅ Receipt sent to:', orderData.customerEmail);
+        }
+    })
+    .catch(error => console.log('❌ Error:', error));
 }
+
+
+
+            
 
 
 

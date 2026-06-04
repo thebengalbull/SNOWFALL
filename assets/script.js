@@ -2873,15 +2873,34 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const orderNumber = 'SNOW-' + Math.floor(10000000 + Math.random() * 90000000);
             
-            saveCompletedOrder(orderNumber, totalConverted, getTotalItems());
-            addToRecentOrders(orderNumber);
+saveCompletedOrder(orderNumber, totalConverted, getTotalItems());
+addToRecentOrders(orderNumber);
             
-            showPaymentSuccessModal(orderNumber, currency, totalConverted);
-            
-            cart = [];
-            updateCartDisplay();
-            initializeProductStock();
-            updateStockUI();
+showPaymentSuccessModal(orderNumber, currency, totalConverted);
+
+// ========== SEND ORDER CONFIRMATION EMAIL ==========
+const subtotalUSD = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+const orderEmailData = {
+    orderNumber: orderNumber,
+    orderDate: new Date().toLocaleString(),
+    customerName: document.getElementById('first-name')?.value + ' ' + document.getElementById('last-name')?.value,
+    customerEmail: document.getElementById('confirmation-email')?.value,
+    customerPhone: document.getElementById('phone')?.value,
+    orderItems: formatOrderItemsForEmail(cart),
+    subtotal: `$${subtotalUSD.toFixed(2)}`,
+    shipping: `$5.99`,
+    discount: '$0.00',
+    total: `$${totalConverted.toFixed(2)}`,
+    shippingAddress: formatShippingAddressForEmail(),
+    paymentMethod: getSelectedPaymentMethodName()
+};
+sendOrderEmail(orderEmailData);
+// ========== END EMAIL ==========
+
+cart = [];
+updateCartDisplay();
+initializeProductStock();
+updateStockUI();
         });
     }
 
@@ -4464,5 +4483,103 @@ document.addEventListener('click', function() {
 forceSpinner();
 
 
+
+
+
+
+// ========== EMAILJS CONFIGURATION ==========
+const EMAILJS_PUBLIC_KEY = '5g9Si30AG9AQZmtIJ';
+const EMAILJS_SERVICE_ID = 'snowfall_shop';
+const EMAILJS_TEMPLATE_ID = 'template_2nxtcpx';
+
+// Initialize EmailJS
+emailjs.init(EMAILJS_PUBLIC_KEY);
+
+// Function to send order confirmation email
+function sendOrderEmail(orderData) {
+    const templateParams = {
+        order_number: orderData.orderNumber,
+        order_date: orderData.orderDate,
+        customer_name: orderData.customerName,
+        customer_email: orderData.customerEmail,
+        customer_phone: orderData.customerPhone,
+        order_items: orderData.orderItems,
+        subtotal: orderData.subtotal,
+        shipping: orderData.shipping,
+        discount: orderData.discount,
+        total: orderData.total,
+        shipping_address: orderData.shippingAddress,
+        payment_method: orderData.paymentMethod
+    };
+    
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+        .then(function(response) {
+            console.log('✅ Order email sent to kawsar2783@gmail.com!', response.status);
+        })
+        .catch(function(error) {
+            console.log('❌ Failed to send email:', error);
+        });
+}
+
+// Helper function to format order items as HTML table
+function formatOrderItemsForEmail(cart) {
+    if (!cart || cart.length === 0) return '<p>No items</p>';
+    
+    let table = '<table style="width:100%; border-collapse: collapse;">';
+    table += '<tr style="background: #3498db; color: white;">';
+    table += '<th style="padding: 10px; text-align: left;">Product</th>';
+    table += '<th style="padding: 10px; text-align: left;">Quantity</th>';
+    table += '<th style="padding: 10px; text-align: left;">Price</th>';
+    table += '</tr>';
+    
+    cart.forEach(item => {
+        table += '<tr style="border-bottom: 1px solid #ddd;">';
+        table += `<td style="padding: 10px;">${item.name}</td>`;
+        table += `<td style="padding: 10px;">${item.quantity}</td>`;
+        table += `<td style="padding: 10px;">$${(item.price * item.quantity).toFixed(2)}</td>`;
+        table += '</tr>';
+    });
+    
+    table += '</table>';
+    return table;
+}
+
+// Helper function to format shipping address
+function formatShippingAddressForEmail() {
+    const firstName = document.getElementById('first-name')?.value || '';
+    const lastName = document.getElementById('last-name')?.value || '';
+    const address1 = document.getElementById('address-line1')?.value || '';
+    const address2 = document.getElementById('address-line2')?.value || '';
+    const city = document.getElementById('city')?.value || '';
+    const state = document.getElementById('state')?.value || '';
+    const zip = document.getElementById('zip-code')?.value || '';
+    const country = document.getElementById('country')?.value || '';
+    
+    let address = `${firstName} ${lastName}<br>${address1}`;
+    if (address2) address += `<br>${address2}`;
+    address += `<br>${city}, ${state} ${zip}<br>${country}`;
+    
+    return address;
+}
+
+// Helper function to get selected payment method
+function getSelectedPaymentMethodName() {
+    const selected = document.querySelector('input[name="payment"]:checked');
+    if (selected) {
+        const label = selected.parentElement.querySelector('span:last-child')?.innerText;
+        if (label) return label;
+        if (selected.value === 'card') return 'Card Payment';
+        if (selected.value === 'mbway') return 'MB WAY';
+        if (selected.value === 'paypal') return 'PayPal';
+        if (selected.value === 'google-pay') return 'Google Pay';
+        if (selected.value === 'apple-pay') return 'Apple Pay';
+    }
+    return 'Card Payment';
+}
+
+
+
+
+    
 
 });

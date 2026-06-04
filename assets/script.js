@@ -4524,17 +4524,15 @@ function sendOrderEmail(orderData) {
 
 
     
-// Helper function to format order items as HTML table
 function formatOrderItemsForEmail(cart) {
     if (!cart || cart.length === 0) return 'No items';
     
     let text = '';
     cart.forEach((item, index) => {
-        text += `${index + 1}. ${item.name} - Qty: ${item.quantity} - $${(item.price * item.quantity).toFixed(2)}\n`;
+        text += item.name + ' x ' + item.quantity + ' = $' + (item.price * item.quantity).toFixed(2) + '\n';
     });
     return text;
 }
-
 
 
 

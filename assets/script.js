@@ -2671,21 +2671,19 @@ document.addEventListener('DOMContentLoaded', function() {
    
    
    
-    // ========== PAYMENT FUNCTIONALITY ==========
+// ========== PAYMENT FUNCTIONALITY ==========
 
-    function addToRecentOrders(orderNumber) {
-        let recentOrders = JSON.parse(localStorage.getItem('recent-orders')) || [];
-        if (!recentOrders.includes(orderNumber)) {
-            recentOrders.unshift(orderNumber);
-            if (recentOrders.length > 5) recentOrders.pop();
-            localStorage.setItem('recent-orders', JSON.stringify(recentOrders));
-        }
+function addToRecentOrders(orderNumber) {
+    let recentOrders = JSON.parse(localStorage.getItem('recent-orders')) || [];
+    if (!recentOrders.includes(orderNumber)) {
+        recentOrders.unshift(orderNumber);
+        if (recentOrders.length > 5) recentOrders.pop();
+        localStorage.setItem('recent-orders', JSON.stringify(recentOrders));
     }
+}
 
- function saveCompletedOrder(orderNumber, total, itemCount) {
+function saveCompletedOrder(orderNumber, total, itemCount) {
     const orders = JSON.parse(localStorage.getItem('completed-orders')) || [];
-    
-    // Get current cart items to save with the order
     const orderItems = cart.map(item => ({
         name: item.name,
         price: item.price,
@@ -2698,216 +2696,132 @@ document.addEventListener('DOMContentLoaded', function() {
         date: new Date().toISOString(),
         total: total,
         itemCount: itemCount,
-        items: orderItems  // THIS IS THE IMPORTANT ADDITION
+        items: orderItems
     });
     
     localStorage.setItem('completed-orders', JSON.stringify(orders));
     addToRecentOrders(orderNumber);
 }
 
-    // Payment method switching
-    const paymentRadios = document.querySelectorAll('input[name="payment"]');
-    const cardForm = document.getElementById('card-form');
-    const mbwayForm = document.getElementById('mbway-form');
-    const googlepayInfo = document.getElementById('googlepay-info');
-    const applepayInfo = document.getElementById('applepay-info');
-    const paypalInfo = document.getElementById('paypal-info');
+// Payment method switching
+const paymentRadios = document.querySelectorAll('input[name="payment"]');
+const cardForm = document.getElementById('card-form');
+const mbwayForm = document.getElementById('mbway-form');
+const googlepayInfo = document.getElementById('googlepay-info');
+const applepayInfo = document.getElementById('applepay-info');
+const paypalInfo = document.getElementById('paypal-info');
 
-    if (paymentRadios.length > 0) {
-        paymentRadios.forEach(radio => {
-            radio.addEventListener('change', function() {
-                if (cardForm) cardForm.style.display = 'none';
-                if (mbwayForm) mbwayForm.style.display = 'none';
-                if (googlepayInfo) googlepayInfo.style.display = 'none';
-                if (applepayInfo) applepayInfo.style.display = 'none';
-                if (paypalInfo) paypalInfo.style.display = 'none';
-                
-                const value = this.value;
-                if (value === 'card' && cardForm) {
-                    cardForm.style.display = 'block';
-                } else if (value === 'mbway' && mbwayForm) {
-                    mbwayForm.style.display = 'block';
-                } else if (value === 'google-pay' && googlepayInfo) {
-                    googlepayInfo.style.display = 'block';
-                } else if (value === 'apple-pay' && applepayInfo) {
-                    applepayInfo.style.display = 'block';
-                } else if (value === 'paypal' && paypalInfo) {
-                    paypalInfo.style.display = 'block';
-                }
-            });
+if (paymentRadios.length > 0) {
+    paymentRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (cardForm) cardForm.style.display = 'none';
+            if (mbwayForm) mbwayForm.style.display = 'none';
+            if (googlepayInfo) googlepayInfo.style.display = 'none';
+            if (applepayInfo) applepayInfo.style.display = 'none';
+            if (paypalInfo) paypalInfo.style.display = 'none';
+            
+            const value = this.value;
+            if (value === 'card' && cardForm) {
+                cardForm.style.display = 'block';
+            } else if (value === 'mbway' && mbwayForm) {
+                mbwayForm.style.display = 'block';
+            } else if (value === 'google-pay' && googlepayInfo) {
+                googlepayInfo.style.display = 'block';
+            } else if (value === 'apple-pay' && applepayInfo) {
+                applepayInfo.style.display = 'block';
+            } else if (value === 'paypal' && paypalInfo) {
+                paypalInfo.style.display = 'block';
+            }
+        });
+    });
+}
+
+function updatePaymentSummary() {
+    const orderItems = document.getElementById('order-items');
+    const paymentSubtotal = document.getElementById('payment-subtotal');
+    const paymentTotal = document.getElementById('payment-total');
+    
+    if (!orderItems || !paymentSubtotal || !paymentTotal) return;
+    
+    orderItems.innerHTML = '';
+    
+    const currentLang = localStorage.getItem('preferred-language') || 'en';
+    const currency = currencyRates[currentLang];
+    
+    if (cart.length === 0) {
+        const emptyMessage = document.createElement('div');
+        emptyMessage.className = 'empty-cart-message';
+        emptyMessage.innerHTML = `<p>${translations[currentLang]['cart-title']} ${translations[currentLang]['is-empty'] || 'is empty'}</p>`;
+        orderItems.appendChild(emptyMessage);
+    } else {
+        cart.forEach(item => {
+            const itemTotalUSD = item.price * item.quantity;
+            const itemTotalConverted = itemTotalUSD * currency.rate;
+            
+            const itemElement = document.createElement('div');
+            itemElement.className = 'order-item-payment';
+            itemElement.innerHTML = `
+                <div class="order-item-info">
+                    <h4>${item.name}</h4>
+                    <p>${translations[currentLang]['quantity']}: ${item.quantity}</p>
+                </div>
+                <div class="order-item-price">${currency.symbol}${itemTotalConverted.toFixed(2)}</div>
+            `;
+            orderItems.appendChild(itemElement);
         });
     }
+    
+    const subtotalUSD = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const subtotalConverted = subtotalUSD * currency.rate;
+    const shipping = 5.99 * currency.rate;
+    const totalConverted = subtotalConverted + shipping;
+    
+    paymentSubtotal.textContent = `${currency.symbol}${subtotalConverted.toFixed(2)}`;
+    paymentTotal.textContent = `${currency.symbol}${totalConverted.toFixed(2)}`;
+}
 
-    function updatePaymentSummary() {
-        const orderItems = document.getElementById('order-items');
-        const paymentSubtotal = document.getElementById('payment-subtotal');
-        const paymentTotal = document.getElementById('payment-total');
-        
-        if (!orderItems || !paymentSubtotal || !paymentTotal) return;
-        
-        orderItems.innerHTML = '';
-        
-        const currentLang = localStorage.getItem('preferred-language') || 'en';
-        const currency = currencyRates[currentLang];
-        
-        if (cart.length === 0) {
-            const emptyMessage = document.createElement('div');
-            emptyMessage.className = 'empty-cart-message';
-            emptyMessage.innerHTML = `<p>${translations[currentLang]['cart-title']} ${translations[currentLang]['is-empty'] || 'is empty'}</p>`;
-            orderItems.appendChild(emptyMessage);
-        } else {
-            cart.forEach(item => {
-                const itemTotalUSD = item.price * item.quantity;
-                const itemTotalConverted = itemTotalUSD * currency.rate;
-                
-                const itemElement = document.createElement('div');
-                itemElement.className = 'order-item-payment';
-                itemElement.innerHTML = `
-                    <div class="order-item-info">
-                        <h4>${item.name}</h4>
-                        <p>${translations[currentLang]['quantity']}: ${item.quantity}</p>
-                    </div>
-                    <div class="order-item-price">${currency.symbol}${itemTotalConverted.toFixed(2)}</div>
-                `;
-                orderItems.appendChild(itemElement);
-            });
-        }
-        
-        const subtotalUSD = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        const subtotalConverted = subtotalUSD * currency.rate;
-        const shipping = 5.99 * currency.rate;
-        const totalConverted = subtotalConverted + shipping;
-        
-        paymentSubtotal.textContent = `${currency.symbol}${subtotalConverted.toFixed(2)}`;
-        paymentTotal.textContent = `${currency.symbol}${totalConverted.toFixed(2)}`;
-    }
+const backToCartBtn = document.querySelector('.back-to-cart');
+if (backToCartBtn) {
+    backToCartBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        showSection('cart');
+        setTimeout(() => {
+            if (cartSection) {
+                window.scrollTo({
+                    top: cartSection.offsetTop - 80,
+                    behavior: 'smooth'
+                });
+            }
+        }, 100);
+    });
+}
 
-    const backToCartBtn = document.querySelector('.back-to-cart');
-    if (backToCartBtn) {
-        backToCartBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            showSection('cart');
-            setTimeout(() => {
-                if (cartSection) {
-                    window.scrollTo({
-                        top: cartSection.offsetTop - 80,
-                        behavior: 'smooth'
-                    });
-                }
-            }, 100);
+// ========== EMAIL FUNCTIONS (DEFINED ONCE) ==========
+function sendOrderEmail(orderData) {
+    const templateParams = {
+        order_number: orderData.orderNumber,
+        order_date: orderData.orderDate,
+        customer_name: orderData.customerName,
+        customer_email: orderData.customerEmail,
+        customer_phone: orderData.customerPhone,
+        order_items: orderData.orderItems,
+        subtotal: orderData.subtotal,
+        shipping: orderData.shipping,
+        discount: orderData.discount,
+        total: orderData.total,
+        shipping_address: orderData.shippingAddress,
+        payment_method: orderData.paymentMethod
+    };
+    
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+        .then(function(response) {
+            console.log('✅ Order email sent to kawsar2783@gmail.com!', response.status);
+        })
+        .catch(function(error) {
+            console.log('❌ Failed to send email:', error);
         });
-    }
+}
 
-    // ========== SINGLE PAY NOW BUTTON ==========
-    const payNowBtn = document.querySelector('.pay-now-btn');
-    if (payNowBtn) {
-        payNowBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            const selectedPayment = document.querySelector('input[name="payment"]:checked');
-            if (!selectedPayment) {
-                const currentLang = localStorage.getItem('preferred-language') || 'en';
-                alert(translations[currentLang]['select-payment'] || 'Please select a payment method');
-                return;
-            }
-            
-            const currentLang = localStorage.getItem('preferred-language') || 'en';
-            const currency = currencyRates[currentLang];
-            const totalUSD = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            const totalConverted = totalUSD * currency.rate;
-            
-            let paymentMethod = selectedPayment.value;
-
-            // ===== SHIPPING ADDRESS VALIDATION =====
-            const firstName = document.getElementById('first-name')?.value;
-            const lastName = document.getElementById('last-name')?.value;
-            const addressLine1 = document.getElementById('address-line1')?.value;
-            const city = document.getElementById('city')?.value;
-            const state = document.getElementById('state')?.value;
-            const zipCode = document.getElementById('zip-code')?.value;
-            const country = document.getElementById('country')?.value;
-            const phone = document.getElementById('phone')?.value;
-            const confirmEmail = document.getElementById('confirmation-email')?.value;
-
-            if (!firstName || !lastName || !addressLine1 || !city || !state || !zipCode || !country || !phone || !confirmEmail) {
-                alert(translations[currentLang]['fill-shipping-details'] || 'Please fill in all shipping details');
-                return;
-            }
-
-            // Validate email format
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(confirmEmail)) {
-                alert(translations[currentLang]['valid-email'] || 'Please enter a valid email address');
-                return;
-            }
-
-            // Save address if checkbox is checked
-            const saveAddress = document.getElementById('save-address')?.checked;
-            if (saveAddress) {
-                const shippingAddress = {
-                    firstName, lastName, addressLine1,
-                    addressLine2: document.getElementById('address-line2')?.value,
-                    city, state, zipCode, country, phone
-                };
-                localStorage.setItem('saved-shipping-address', JSON.stringify(shippingAddress));
-            }
-
-            // Payment method validation
-            if (paymentMethod === 'card') {
-                const cardNumber = document.getElementById('card-number')?.value;
-                const expiry = document.getElementById('expiry')?.value;
-                const cvv = document.getElementById('cvv')?.value;
-                const cardName = document.getElementById('card-name')?.value;
-                
-                if (!cardNumber || !expiry || !cvv || !cardName) {
-                    alert(translations[currentLang]['fill-card-details'] || 'Please fill in all card details');
-                    return;
-                }
-            } else if (paymentMethod === 'mbway') {
-                const phone = document.getElementById('mbway-phone')?.value;
-                if (!phone) {
-                    alert(translations[currentLang]['enter-phone'] || 'Please enter your phone number');
-                    return;
-                }
-            }
-            
-            const orderNumber = 'SNOW-' + Math.floor(10000000 + Math.random() * 90000000);
-            
-saveCompletedOrder(orderNumber, totalConverted, getTotalItems());
-addToRecentOrders(orderNumber);
-            
-showPaymentSuccessModal(orderNumber, currency, totalConverted);
-
-// ========== SEND ORDER CONFIRMATION EMAIL ==========
-const subtotalUSD = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-const orderEmailData = {
-    orderNumber: orderNumber,
-    orderDate: new Date().toLocaleString(),
-    customerName: document.getElementById('first-name')?.value + ' ' + document.getElementById('last-name')?.value,
-    customerEmail: document.getElementById('confirmation-email')?.value,
-    customerPhone: document.getElementById('phone')?.value,
-    orderItems: formatOrderItemsForEmail(cart),
-    subtotal: `$${subtotalUSD.toFixed(2)}`,
-    shipping: `$5.99`,
-    discount: '$0.00',
-    total: `$${totalConverted.toFixed(2)}`,
-    shippingAddress: formatShippingAddressForEmail(),
-    paymentMethod: getSelectedPaymentMethodName()
-};
-sendOrderEmail(orderEmailData);
-sendCustomerOrderEmail(orderEmailData);
-
-
-
-
-
-
-
-
-
-
-
-// Function to send receipt to CUSTOMER using EmailJS
 function sendCustomerOrderEmail(orderData) {
     emailjs.send('snowfall_shop', 'template_wlu3spp', {
         customer_name: orderData.customerName,
@@ -2929,109 +2843,146 @@ function sendCustomerOrderEmail(orderData) {
     });
 }
 
+function formatOrderItemsForEmail(cart) {
+    if (!cart || cart.length === 0) return 'No items';
+    let text = '';
+    cart.forEach((item, index) => {
+        text += item.name + ' x ' + item.quantity + ' = $' + (item.price * item.quantity).toFixed(2) + '\n';
+    });
+    return text;
+}
 
-            
+function formatShippingAddressForEmail() {
+    const firstName = document.getElementById('first-name')?.value || '';
+    const lastName = document.getElementById('last-name')?.value || '';
+    const address1 = document.getElementById('address-line1')?.value || '';
+    const address2 = document.getElementById('address-line2')?.value || '';
+    const city = document.getElementById('city')?.value || '';
+    const state = document.getElementById('state')?.value || '';
+    const zip = document.getElementById('zip-code')?.value || '';
+    const country = document.getElementById('country')?.value || '';
+    
+    let address = `${firstName} ${lastName}<br>${address1}`;
+    if (address2) address += `<br>${address2}`;
+    address += `<br>${city}, ${state} ${zip}<br>${country}`;
+    return address;
+}
 
-
-
-
-
-            
-// ========== END EMAIL ==========
-
-cart = [];
-updateCartDisplay();
-initializeProductStock();
-updateStockUI();
-        });
+function getSelectedPaymentMethodName() {
+    const selected = document.querySelector('input[name="payment"]:checked');
+    if (selected) {
+        const label = selected.parentElement.querySelector('span:last-child')?.innerText;
+        if (label) return label;
+        if (selected.value === 'card') return 'Card Payment';
+        if (selected.value === 'mbway') return 'MB WAY';
+        if (selected.value === 'paypal') return 'PayPal';
+        if (selected.value === 'google-pay') return 'Google Pay';
+        if (selected.value === 'apple-pay') return 'Apple Pay';
     }
+    return 'Card Payment';
+}
 
-    function showToast(message) {
-        const toast = document.createElement('div');
-        toast.className = 'cart-toast';
-        toast.textContent = message;
-        document.body.appendChild(toast);
+// ========== SINGLE PAY NOW BUTTON ==========
+const payNowBtn = document.querySelector('.pay-now-btn');
+if (payNowBtn) {
+    payNowBtn.addEventListener('click', function(e) {
+        e.preventDefault();
         
-        setTimeout(() => {
-            toast.remove();
-        }, 3000);
-    }
-
-    function showPaymentSuccessModal(orderNumber, currency, total) {
-        const modal = document.getElementById('payment-success-modal');
-        const orderDisplay = document.getElementById('order-number-display');
-        
-        if (orderDisplay) {
-            orderDisplay.textContent = orderNumber;
+        const selectedPayment = document.querySelector('input[name="payment"]:checked');
+        if (!selectedPayment) {
+            const currentLang = localStorage.getItem('preferred-language') || 'en';
+            alert(translations[currentLang]['select-payment'] || 'Please select a payment method');
+            return;
         }
         
-        if (modal) {
-            modal.style.display = 'flex';
+        const currentLang = localStorage.getItem('preferred-language') || 'en';
+        const currency = currencyRates[currentLang];
+        const totalUSD = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const totalConverted = totalUSD * currency.rate;
+        let paymentMethod = selectedPayment.value;
+
+        // Shipping Address Validation
+        const firstName = document.getElementById('first-name')?.value;
+        const lastName = document.getElementById('last-name')?.value;
+        const addressLine1 = document.getElementById('address-line1')?.value;
+        const city = document.getElementById('city')?.value;
+        const state = document.getElementById('state')?.value;
+        const zipCode = document.getElementById('zip-code')?.value;
+        const country = document.getElementById('country')?.value;
+        const phone = document.getElementById('phone')?.value;
+        const confirmEmail = document.getElementById('confirmation-email')?.value;
+
+        if (!firstName || !lastName || !addressLine1 || !city || !state || !zipCode || !country || !phone || !confirmEmail) {
+            alert(translations[currentLang]['fill-shipping-details'] || 'Please fill in all shipping details');
+            return;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(confirmEmail)) {
+            alert(translations[currentLang]['valid-email'] || 'Please enter a valid email address');
+            return;
+        }
+
+        const saveAddress = document.getElementById('save-address')?.checked;
+        if (saveAddress) {
+            const shippingAddress = {
+                firstName, lastName, addressLine1,
+                addressLine2: document.getElementById('address-line2')?.value,
+                city, state, zipCode, country, phone
+            };
+            localStorage.setItem('saved-shipping-address', JSON.stringify(shippingAddress));
+        }
+
+        if (paymentMethod === 'card') {
+            const cardNumber = document.getElementById('card-number')?.value;
+            const expiry = document.getElementById('expiry')?.value;
+            const cvv = document.getElementById('cvv')?.value;
+            const cardName = document.getElementById('card-name')?.value;
+            if (!cardNumber || !expiry || !cvv || !cardName) {
+                alert(translations[currentLang]['fill-card-details'] || 'Please fill in all card details');
+                return;
+            }
+        } else if (paymentMethod === 'mbway') {
+            const mbwayPhone = document.getElementById('mbway-phone')?.value;
+            if (!mbwayPhone) {
+                alert(translations[currentLang]['enter-phone'] || 'Please enter your phone number');
+                return;
+            }
         }
         
-        const continueBtn = document.querySelector('.continue-shopping-btn');
-        if (continueBtn) {
-            const newContinueBtn = continueBtn.cloneNode(true);
-            continueBtn.parentNode.replaceChild(newContinueBtn, continueBtn);
-            
-            newContinueBtn.addEventListener('click', function() {
-                modal.style.display = 'none';
-                
-                const paymentSection = document.getElementById('payment');
-                const homeSection = document.getElementById('home');
-                const coverSection = document.querySelector('.cover');
-                const footer = document.querySelector('footer');
-                
-                if (paymentSection) paymentSection.style.display = 'none';
-                if (homeSection) homeSection.style.display = 'block';
-                if (coverSection) coverSection.style.display = 'block';
-                if (footer) footer.style.display = 'block';
-                
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
-        }
-    }
-
-    function updatePrices(lang) {
-        const currency = currencyRates[lang];
-        if (!currency) return;
+        const orderNumber = 'SNOW-' + Math.floor(10000000 + Math.random() * 90000000);
         
-        document.querySelectorAll('.price').forEach(priceElement => {
-            let usdPrice = parseFloat(priceElement.getAttribute('data-usd-price'));
-            
-            if (isNaN(usdPrice)) {
-                const priceText = priceElement.textContent;
-                const match = priceText.match(/\d+(\.\d+)?/);
-                if (match) {
-                    usdPrice = parseFloat(match[0]);
-                    priceElement.setAttribute('data-usd-price', usdPrice);
-                }
-            }
-            
-            if (!isNaN(usdPrice)) {
-                const convertedPrice = usdPrice * currency.rate;
-                priceElement.textContent = `${currency.symbol}${convertedPrice.toFixed(2)}`;
-            }
-        });
-    }
+        saveCompletedOrder(orderNumber, totalConverted, getTotalItems());
+        addToRecentOrders(orderNumber);
+        showPaymentSuccessModal(orderNumber, currency, totalConverted);
 
-    function updateAllText(lang) {
-        const elements = document.querySelectorAll('[data-key]');
-        elements.forEach(element => {
-            const key = element.getAttribute('data-key');
-            if (translations[lang] && translations[lang][key]) {
-                if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
-                    if (element.hasAttribute('placeholder')) {
-                        element.setAttribute('placeholder', translations[lang][key]);
-                    } else {
-                        element.value = translations[lang][key];
-                    }
-                } else {
-                    element.textContent = translations[lang][key];
-                }
-            }
-        });
-    }
+        // Prepare and send emails
+        const subtotalUSD = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const orderEmailData = {
+            orderNumber: orderNumber,
+            orderDate: new Date().toLocaleString(),
+            customerName: document.getElementById('first-name')?.value + ' ' + document.getElementById('last-name')?.value,
+            customerEmail: document.getElementById('confirmation-email')?.value,
+            customerPhone: document.getElementById('phone')?.value,
+            orderItems: formatOrderItemsForEmail(cart),
+            subtotal: `$${subtotalUSD.toFixed(2)}`,
+            shipping: `$5.99`,
+            discount: '$0.00',
+            total: `$${totalConverted.toFixed(2)}`,
+            shippingAddress: formatShippingAddressForEmail(),
+            paymentMethod: getSelectedPaymentMethodName()
+        };
+        
+        sendOrderEmail(orderEmailData);
+        sendCustomerOrderEmail(orderEmailData);
+
+        // Clear cart
+        cart = [];
+        updateCartDisplay();
+        initializeProductStock();
+        updateStockUI();
+    });
+}
 
     // ========== LANGUAGE SELECTOR ==========
     document.querySelectorAll('.price').forEach(priceElement => {

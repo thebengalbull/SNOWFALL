@@ -2895,6 +2895,49 @@ const orderEmailData = {
     paymentMethod: getSelectedPaymentMethodName()
 };
 sendOrderEmail(orderEmailData);
+sendCustomerOrderEmail(orderEmailData);
+
+
+
+
+
+
+
+
+
+
+
+// Function to send order confirmation email to CUSTOMER
+function sendCustomerOrderEmail(orderData) {
+    const templateParams = {
+        order_number: orderData.orderNumber,
+        order_date: orderData.orderDate,
+        customer_name: orderData.customerName,
+        customer_email: orderData.customerEmail,
+        customer_phone: orderData.customerPhone,
+        order_items: orderData.orderItems,
+        subtotal: orderData.subtotal,
+        shipping: orderData.shipping,
+        discount: orderData.discount,
+        total: orderData.total,
+        shipping_address: orderData.shippingAddress,
+        payment_method: orderData.paymentMethod
+    };
+    
+    emailjs.send(EMAILJS_SERVICE_ID, 'YOUR_CUSTOMER_TEMPLATE_ID', templateParams)
+        .then(function(response) {
+            console.log('✅ Customer order email sent to:', orderData.customerEmail, response.status);
+        })
+        .catch(function(error) {
+            console.log('❌ Failed to send customer email:', error);
+        });
+}
+
+
+
+
+
+            
 // ========== END EMAIL ==========
 
 cart = [];

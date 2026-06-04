@@ -4521,29 +4521,24 @@ function sendOrderEmail(orderData) {
         });
 }
 
+
+
+    
 // Helper function to format order items as HTML table
 function formatOrderItemsForEmail(cart) {
-    if (!cart || cart.length === 0) return '<p>No items</p>';
+    if (!cart || cart.length === 0) return 'No items';
     
-    let table = '<table style="width:100%; border-collapse: collapse;">';
-    table += '<tr style="background: #3498db; color: white;">';
-    table += '<th style="padding: 10px; text-align: left;">Product</th>';
-    table += '<th style="padding: 10px; text-align: left;">Quantity</th>';
-    table += '<th style="padding: 10px; text-align: left;">Price</th>';
-    table += '</tr>';
-    
-    cart.forEach(item => {
-        table += '<tr style="border-bottom: 1px solid #ddd;">';
-        table += `<td style="padding: 10px;">${item.name}</td>`;
-        table += `<td style="padding: 10px;">${item.quantity}</td>`;
-        table += `<td style="padding: 10px;">$${(item.price * item.quantity).toFixed(2)}</td>`;
-        table += '</tr>';
+    let text = '';
+    cart.forEach((item, index) => {
+        text += `${index + 1}. ${item.name} - Qty: ${item.quantity} - $${(item.price * item.quantity).toFixed(2)}\n`;
     });
-    
-    table += '</table>';
-    return table;
+    return text;
 }
 
+
+
+
+    
 // Helper function to format shipping address
 function formatShippingAddressForEmail() {
     const firstName = document.getElementById('first-name')?.value || '';

@@ -4471,7 +4471,7 @@ function updateSpinnerVisibility() {
     const homeSection = document.getElementById('home');
     const isHomeVisible = homeSection && homeSection.style.display !== 'none';
     
-    console.log('Home visible?', isHomeVisible); // Check in console
+    console.log('Home visible?', isHomeVisible);
     
     if (spinner) {
         spinner.style.display = isHomeVisible ? 'block' : 'none';
@@ -4480,9 +4480,6 @@ function updateSpinnerVisibility() {
         scrollArrow.style.display = isHomeVisible ? 'block' : 'none';
     }
 }
-
-// Make sure this runs AFTER hideAllSections and showSection are defined
-// Put this at the VERY END of your script.js file, before the last });
 
 // Initial call
 setTimeout(updateSpinnerVisibility, 200);
@@ -4498,52 +4495,6 @@ document.querySelectorAll('nav a').forEach(link => {
 window.addEventListener('hashchange', function() {
     setTimeout(updateSpinnerVisibility, 100);
 });
-
-
-
-
-
-
-
-
-// FORCE SPINNER CONTROL - DIRECT DOM MANIPULATION
-function forceSpinner() {
-    const spinner = document.querySelector('.spin-wheel-container');
-    const arrow = document.querySelector('.scroll-indicator');
-    
-    // Check what page we're on
-    const isProducts = document.getElementById('products-section') && document.getElementById('products-section').style.display === 'block';
-    const isServices = document.getElementById('services') && document.getElementById('services').style.display === 'block';
-    const isAbout = document.getElementById('about') && document.getElementById('about').style.display === 'block';
-    const isContact = document.getElementById('contact') && document.getElementById('contact').style.display === 'block';
-    const isCart = document.getElementById('cart') && document.getElementById('cart').style.display === 'block';
-    const isPayment = document.getElementById('payment') && document.getElementById('payment').style.display === 'block';
-    
-    // Hide on ANY page except home
-    const shouldHide = isProducts || isServices || isAbout || isContact || isCart || isPayment;
-    
-    if (spinner) {
-        spinner.style.cssText = shouldHide ? 'display: none !important;' : 'display: block !important;';
-    }
-    if (arrow) {
-        arrow.style.cssText = shouldHide ? 'display: none !important;' : 'display: block !important;';
-    }
-    
-    console.log('Spinner hidden?', shouldHide);
-}
-
-// Run every half second to make sure
-setInterval(forceSpinner, 500);
-
-// Run on all clicks
-document.addEventListener('click', function() {
-    setTimeout(forceSpinner, 100);
-});
-
-// Run on load
-forceSpinner();
-
-
 
 
 

@@ -4905,7 +4905,41 @@ const forceReturnsXButton = setInterval(function() {
 
 
 
+// Force X buttons to be visible when modals open
+function fixModalButtons() {
+    const trackingX = document.getElementById('tracking-modal-close');
+    const labelX = document.querySelector('.label-close-btn');
+    
+    if (trackingX) {
+        trackingX.style.display = 'flex';
+        trackingX.style.visibility = 'visible';
+        trackingX.style.opacity = '1';
+    }
+    
+    if (labelX) {
+        labelX.style.display = 'flex';
+        labelX.style.visibility = 'visible';
+        labelX.style.opacity = '1';
+    }
+}
 
+// Fix when Returns Tracking button is clicked
+const returnsTrackingBtn = document.getElementById('returns-tracking-btn');
+if (returnsTrackingBtn) {
+    const originalClick = returnsTrackingBtn.onclick;
+    returnsTrackingBtn.addEventListener('click', function() {
+        setTimeout(fixModalButtons, 50);
+        setTimeout(fixModalButtons, 200);
+    });
+}
+
+// Fix when View Label button is clicked
+const viewLabelBtn = document.getElementById('view-label-btn');
+if (viewLabelBtn) {
+    viewLabelBtn.addEventListener('click', function() {
+        setTimeout(fixModalButtons, 50);
+    });
+}
 
 
 

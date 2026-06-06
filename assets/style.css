@@ -4554,3 +4554,9 @@ body[dir="rtl"] .quick-question {
         white-space: nowrap;
     }
 }
+
+
+/* Hide copy button after copy */
+.copy-btn.copied {
+    display: none !important;
+}

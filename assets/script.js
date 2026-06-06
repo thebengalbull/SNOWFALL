@@ -38,7 +38,7 @@ function sendCustomerReceipt(orderDetails, customerEmail, customerName) {
         year: new Date().getFullYear()
     };
     
-    return emailjs.send('YOUR_SERVICE_ID', 'template_wlu3spp', templateParams)
+    return emailjs.send('snowfall_shop', 'template_wlu3spp', templateParams)
         .then(function(response) {
             console.log('Customer receipt sent!', response.status);
             return true;
@@ -76,7 +76,7 @@ function sendAdminNotification(orderDetails) {
         payment_method: orderDetails.paymentMethod
     };
     
-    return emailjs.send('YOUR_SERVICE_ID', 'template_2nxtcpx', templateParams)
+    return emailjs.send('snowfall_shop', 'template_2nxtcpx', templateParams)
         .then(function(response) {
             console.log('Admin notification sent!', response.status);
             return true;

@@ -4147,17 +4147,18 @@ const finalRefund = totalRefundAmount - returnFee;
 
 const returnDetailsForEmail = {
     returnNumber: returnNumber,
+    orderNumber: selectedReturnOrder.number,
     returnDate: new Date().toLocaleString(),
     returnItemsList: returnItemsForEmail,
     totalRefund: `${returnType === '7day' ? '€' : '$'}${finalRefund.toFixed(2)}`,
-    returnType: returnType === '7day' ? '7-Day Return' : '30-Day Return',
+    returnType: returnType === '7day' ? '7-Day Return (€30 fee)' : '30-Day Return ($5.99 fee)',
     reason: document.getElementById('return-reason-select').options[document.getElementById('return-reason-select').selectedIndex]?.text || 'Not specified',
+    comments: document.getElementById('return-comments').value || 'No comments',   // <--- ADD THIS LINE
     shippingAddress: originalOrder?.shippingAddress || 'Address not available',
     customerName: originalOrder?.customerName || 'Customer',
     customerEmail: originalOrder?.customerEmail || '',
     customerPhone: originalOrder?.customerPhone || ''
 };
-
 // Send emails
 if (originalOrder?.customerEmail) {
     sendReturnEmails(returnDetailsForEmail, {

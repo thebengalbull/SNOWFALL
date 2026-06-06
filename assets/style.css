@@ -4535,5 +4535,9 @@ body[dir="rtl"] .quick-question {
 .copy-btn.copied {
     display: none !important;
 }
-
+/* Fix CLICK HERE white background */
+.scroll-indicator::after {
+    background: transparent !important;
+    background-color: transparent !important;
+}
 

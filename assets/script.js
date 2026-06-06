@@ -137,24 +137,34 @@ function sendOrderEmails(orderNumber, total, customerInfo, cartItems, paymentMet
 
 
 
-// ========== RETURN REQUEST EMAIL FUNCTIONS ==========
+// ========== RETURN REQUEST EMAIL FUNCTIONS (USING EXISTING TEMPLATES) ==========
 
-// Function to send return request notification to admin (you receive)
+// Function to send return request notification to admin (using existing admin template)
 function sendReturnAdminNotification(returnDetails) {
+    // Format return items for the existing template
+    let itemsHtml = '';
+    returnDetails.returnItemsList.forEach(item => {
+        itemsHtml += `
+            <tr>
+                <td style="padding: 10px; border-bottom: 1px solid #ddd;">${item.name}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: center;">${item.quantity}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">$${item.price.toFixed(2)}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td>
+            </tr>
+        `;
+    });
+    
     const templateParams = {
         to_email: 'kawsar2783@gmail.com',
-        return_number: returnDetails.returnNumber,
-        order_number: returnDetails.orderNumber,
+        order_number: returnDetails.returnNumber,  // Using return number as order number
         customer_name: returnDetails.customerName,
         customer_email: returnDetails.customerEmail,
         customer_phone: returnDetails.customerPhone,
-        return_date: returnDetails.returnDate,
-        return_items: returnDetails.items,
-        return_reason: returnDetails.reason,
-        return_comments: returnDetails.comments || 'No additional comments',
-        refund_amount: returnDetails.refundAmount,
-        return_fee: returnDetails.returnFee,
-        return_type: returnDetails.returnType
+        order_date: returnDetails.returnDate,
+        order_total: returnDetails.totalRefund,
+        items_html: itemsHtml,
+        shipping_address: returnDetails.shippingAddress,
+        payment_method: `RETURN - ${returnDetails.returnType} - Reason: ${returnDetails.reason}`
     };
     
     return emailjs.send('snowfall_shop', 'template_2nxtcpx', templateParams)
@@ -168,20 +178,30 @@ function sendReturnAdminNotification(returnDetails) {
         });
 }
 
-// Function to send return confirmation to customer
+// Function to send return confirmation to customer (using existing customer template)
 function sendReturnCustomerReceipt(returnDetails, customerEmail, customerName) {
+    // Format return items for email
+    let itemsHtml = '';
+    returnDetails.returnItemsList.forEach(item => {
+        itemsHtml += `
+            <tr>
+                <td style="padding: 10px; border-bottom: 1px solid #ddd;">${item.name}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: center;">${item.quantity}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">$${item.price.toFixed(2)}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td>
+            </tr>
+        `;
+    });
+    
     const templateParams = {
         to_email: customerEmail,
         to_name: customerName,
-        return_number: returnDetails.returnNumber,
-        order_number: returnDetails.orderNumber,
-        return_date: returnDetails.returnDate,
-        return_items: returnDetails.items,
-        return_reason: returnDetails.reason,
-        refund_amount: returnDetails.refundAmount,
-        return_fee: returnDetails.returnFee,
-        return_type: returnDetails.returnType,
+        order_number: returnDetails.returnNumber,
+        order_date: returnDetails.returnDate,
+        order_total: returnDetails.totalRefund,
         shipping_address: returnDetails.shippingAddress,
+        items_html: itemsHtml,
+        tracking_url: `https://snowfall.com/return?number=${returnDetails.returnNumber}`,
         support_email: 'support@snowfall.com',
         company_name: 'SNOWFALL',
         year: new Date().getFullYear()
@@ -200,6 +220,13 @@ function sendReturnCustomerReceipt(returnDetails, customerEmail, customerName) {
 
 // Main function to send both return emails
 function sendReturnEmails(returnDetails, customerInfo) {
+    // Only send if customer email exists
+    if (!customerInfo.email || customerInfo.email === '') {
+        console.warn('⚠️ No customer email found, sending admin only');
+        sendReturnAdminNotification(returnDetails);
+        return;
+    }
+    
     Promise.all([
         sendReturnAdminNotification(returnDetails),
         sendReturnCustomerReceipt(returnDetails, customerInfo.email, customerInfo.name)
@@ -215,7 +242,6 @@ function sendReturnEmails(returnDetails, customerInfo) {
         }
     });
 }
-
     
 
 
@@ -4103,13 +4129,46 @@ const customerInfo = {
     name: originalOrder?.customerName || 'Customer'
 };
 
-// Send emails if customer email exists
-if (customerInfo.email) {
-    sendReturnEmails(returnDetails, customerInfo);
-} else {
-    console.warn('⚠️ No customer email found, sending admin only');
-    sendReturnAdminNotification(returnDetails);
-}
+// Prepare return items list for email
+const returnItemsForEmail = [];
+let totalRefundAmount = 0;
+
+document.querySelectorAll('[class^="return-qty-"]').forEach(select => {
+    const qty = parseInt(select.value);
+    if (qty > 0) {
+        const price = parseFloat(select.getAttribute('data-price'));
+        const itemName = select.closest('.return-item').querySelector('h4').textContent;
+        returnItemsForEmail.push({
+            name: itemName,
+            quantity: qty,
+            price: price
+        });
+        totalRefundAmount += price * qty;
+    }
+});
+
+const returnType = localStorage.getItem('returnType') || '30day';
+const returnFee = returnType === '7day' ? 30 : 5.99;
+const finalRefund = totalRefundAmount - returnFee;
+
+const returnDetailsForEmail = {
+    returnNumber: returnNumber,
+    returnDate: new Date().toLocaleString(),
+    returnItemsList: returnItemsForEmail,
+    totalRefund: `$${finalRefund.toFixed(2)}`,
+    returnType: returnType === '7day' ? '7-Day Return' : '30-Day Return',
+    reason: document.getElementById('return-reason-select').options[document.getElementById('return-reason-select').selectedIndex]?.text || 'Not specified',
+    shippingAddress: originalOrder?.shippingAddress || 'Address not available',
+    customerName: originalOrder?.customerName || 'Customer',
+    customerEmail: originalOrder?.customerEmail || '',
+    customerPhone: originalOrder?.customerPhone || ''
+};
+
+// Send emails using existing templates
+sendReturnEmails(returnDetailsForEmail, {
+    email: originalOrder?.customerEmail || '',
+    name: originalOrder?.customerName || 'Customer'
+});
 
 returnsModal.style.display = 'none';
 document.getElementById('return-success-modal').style.display = 'block';

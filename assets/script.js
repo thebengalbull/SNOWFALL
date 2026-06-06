@@ -4909,19 +4909,7 @@ const forceReturnsXButton = setInterval(function() {
 
 
 
-// Function to show hand pointer pointing to hamburger menu
-function showHandPointer() {
-    const isMobile = window.innerWidth <= 768;
-    if (!isMobile) return;
-    
-    const handPointer = document.getElementById('handPointer');
-    if (handPointer) {
-        handPointer.style.display = 'block';
-        setTimeout(function() {
-            handPointer.style.display = 'none';
-        }, 5000);
-    }
-}
+
 
 // Make functions available for testing (remove after testing)
 window.sendAdminNotification = sendAdminNotification;

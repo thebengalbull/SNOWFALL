@@ -4699,7 +4699,8 @@ function showHandPointer() {
     }
 }
 
-
-
+// Make functions available for testing (remove after testing)
+window.sendAdminNotification = sendAdminNotification;
+window.sendCustomerReceipt = sendCustomerReceipt;
 
 });

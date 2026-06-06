@@ -4291,30 +4291,49 @@ window.addEventListener('click', function(e) {
         requestAnimationFrame(animate);
     }
     
- // Main copy function that saves coupon to cart
+
+// Main copy function that saves coupon to cart
 window.copyCoupon = function() {
     const couponText = document.getElementById('couponCode').innerText;
-    console.log('Coupon text:', couponText); // Debug log
+    const copyBtn = document.querySelector('.copy-btn');
+    console.log('Coupon text:', couponText);
     
     if (couponText && couponText !== "No luck this time! Try again!" && couponText !== "No luck this time! Try again!") {
         
-        
-       // Try modern clipboard API first
-if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(couponText).then(function() {
-        console.log('Coupon copied using clipboard API');
-        showCopyNotification(couponText);
-        showHandPointer();  // ← ADD THIS LINE
-    }).catch(function(err) {
-        console.error('Clipboard copy failed:', err);
-        fallbackCopy(couponText);
-        showHandPointer();  // ← ADD THIS LINE
-    });
-} else {
-    // Fallback for older browsers
-    fallbackCopy(couponText);
-    showHandPointer();  // ← ADD THIS LINE
-}
+        // Try modern clipboard API first
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(couponText).then(function() {
+                console.log('Coupon copied using clipboard API');
+                showCopyNotification(couponText);
+                showHandPointer();
+                
+                // Hide the copy button after successful copy
+                if (copyBtn) {
+                    copyBtn.classList.add('copied');
+                    copyBtn.style.display = 'none';
+                }
+            }).catch(function(err) {
+                console.error('Clipboard copy failed:', err);
+                fallbackCopy(couponText);
+                showHandPointer();
+                
+                // Hide the copy button after fallback copy
+                if (copyBtn) {
+                    copyBtn.classList.add('copied');
+                    copyBtn.style.display = 'none';
+                }
+            });
+        } else {
+            // Fallback for older browsers
+            fallbackCopy(couponText);
+            showHandPointer();
+            
+            // Hide the copy button after fallback copy
+            if (copyBtn) {
+                copyBtn.classList.add('copied');
+                copyBtn.style.display = 'none';
+            }
+        }
         
         // Save to localStorage for cart
         const activeCoupon = localStorage.getItem('activeCoupon');
@@ -4353,6 +4372,8 @@ if (navigator.clipboard && navigator.clipboard.writeText) {
         alert('Nothing to copy! Spin the wheel first!');
     }
 };
+
+    
 
 // Fallback copy method
 function fallbackCopy(text) {

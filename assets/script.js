@@ -129,6 +129,100 @@ function sendOrderEmails(orderNumber, total, customerInfo, cartItems, paymentMet
 
 
 
+
+
+
+
+
+
+
+
+// ========== RETURN REQUEST EMAIL FUNCTIONS ==========
+
+// Function to send return request notification to admin (you receive)
+function sendReturnAdminNotification(returnDetails) {
+    const templateParams = {
+        to_email: 'kawsar2783@gmail.com',
+        return_number: returnDetails.returnNumber,
+        order_number: returnDetails.orderNumber,
+        customer_name: returnDetails.customerName,
+        customer_email: returnDetails.customerEmail,
+        customer_phone: returnDetails.customerPhone,
+        return_date: returnDetails.returnDate,
+        return_items: returnDetails.items,
+        return_reason: returnDetails.reason,
+        return_comments: returnDetails.comments || 'No additional comments',
+        refund_amount: returnDetails.refundAmount,
+        return_fee: returnDetails.returnFee,
+        return_type: returnDetails.returnType
+    };
+    
+    return emailjs.send('snowfall_shop', 'template_2nxtcpx', templateParams)
+        .then(function(response) {
+            console.log('✅ Return request admin notification sent!', response.status);
+            return true;
+        })
+        .catch(function(error) {
+            console.error('❌ Failed to send return admin notification:', error);
+            return false;
+        });
+}
+
+// Function to send return confirmation to customer
+function sendReturnCustomerReceipt(returnDetails, customerEmail, customerName) {
+    const templateParams = {
+        to_email: customerEmail,
+        to_name: customerName,
+        return_number: returnDetails.returnNumber,
+        order_number: returnDetails.orderNumber,
+        return_date: returnDetails.returnDate,
+        return_items: returnDetails.items,
+        return_reason: returnDetails.reason,
+        refund_amount: returnDetails.refundAmount,
+        return_fee: returnDetails.returnFee,
+        return_type: returnDetails.returnType,
+        shipping_address: returnDetails.shippingAddress,
+        support_email: 'support@snowfall.com',
+        company_name: 'SNOWFALL',
+        year: new Date().getFullYear()
+    };
+    
+    return emailjs.send('snowfall_shop', 'template_wlu3spp', templateParams)
+        .then(function(response) {
+            console.log('✅ Return confirmation sent to customer!', response.status);
+            return true;
+        })
+        .catch(function(error) {
+            console.error('❌ Failed to send return confirmation to customer:', error);
+            return false;
+        });
+}
+
+// Main function to send both return emails
+function sendReturnEmails(returnDetails, customerInfo) {
+    Promise.all([
+        sendReturnAdminNotification(returnDetails),
+        sendReturnCustomerReceipt(returnDetails, customerInfo.email, customerInfo.name)
+    ]).then(results => {
+        if (results[0] && results[1]) {
+            console.log('✅ Both return emails sent successfully!');
+        } else if (results[0] && !results[1]) {
+            console.warn('⚠️ Return admin email sent, but customer email failed');
+        } else if (!results[0] && results[1]) {
+            console.warn('⚠️ Return customer email sent, but admin email failed');
+        } else {
+            console.error('❌ Both return emails failed to send');
+        }
+    });
+}
+
+    
+
+
+
+    
+
+
     // ========== GLOBAL VARIABLES ==========
     let cart = [];
     let productStock = {};
@@ -3956,12 +4050,71 @@ if (nextBtn) {
             }
             
             const returnNumber = 'RET-' + Math.floor(10000000 + Math.random() * 90000000);
-            document.getElementById('return-request-number').textContent = returnNumber;
-            
-            returnsModal.style.display = 'none';
-            document.getElementById('return-success-modal').style.display = 'block';
-            
-            setTimeout(resetReturnForm, 500);
+document.getElementById('return-request-number').textContent = returnNumber;
+
+// Get customer info from the order
+const orders = JSON.parse(localStorage.getItem('completed-orders')) || [];
+const originalOrder = orders.find(o => o.orderNumber === selectedReturnOrder.number);
+
+// Get return items and amounts
+const returnItemsList = [];
+let totalRefund = 0;
+
+document.querySelectorAll('[class^="return-qty-"]').forEach(select => {
+    const qty = parseInt(select.value);
+    if (qty > 0) {
+        const price = parseFloat(select.getAttribute('data-price'));
+        const itemName = select.closest('.return-item').querySelector('h4').textContent;
+        returnItemsList.push({
+            name: itemName,
+            quantity: qty,
+            price: price,
+            total: price * qty
+        });
+        totalRefund += price * qty;
+    }
+});
+
+const returnType = localStorage.getItem('returnType') || '30day';
+const returnFee = returnType === '7day' ? 30 : 5.99;
+const totalRefundWithFee = totalRefund - returnFee;
+
+// Prepare return details for email
+const returnDetails = {
+    returnNumber: returnNumber,
+    orderNumber: selectedReturnOrder.number,
+    customerName: originalOrder?.customerName || 'Customer',
+    customerEmail: originalOrder?.customerEmail || '',
+    customerPhone: originalOrder?.customerPhone || '',
+    returnDate: new Date().toLocaleString(),
+    items: returnItemsList.map(item => `${item.name} x${item.quantity} - $${item.total.toFixed(2)}`).join(', '),
+    reason: document.getElementById('return-reason-select').options[document.getElementById('return-reason-select').selectedIndex]?.text || 'Not specified',
+    comments: document.getElementById('return-comments').value || 'No additional comments',
+    refundAmount: `$${totalRefund.toFixed(2)}`,
+    returnFee: `$${returnFee.toFixed(2)}`,
+    totalRefund: `$${totalRefundWithFee.toFixed(2)}`,
+    returnType: returnType === '7day' ? '7-Day Return (€30 fee)' : '30-Day Return ($5.99 fee)',
+    shippingAddress: originalOrder?.shippingAddress || 'Address not available'
+};
+
+// Customer info for email
+const customerInfo = {
+    email: originalOrder?.customerEmail || '',
+    name: originalOrder?.customerName || 'Customer'
+};
+
+// Send emails if customer email exists
+if (customerInfo.email) {
+    sendReturnEmails(returnDetails, customerInfo);
+} else {
+    console.warn('⚠️ No customer email found, sending admin only');
+    sendReturnAdminNotification(returnDetails);
+}
+
+returnsModal.style.display = 'none';
+document.getElementById('return-success-modal').style.display = 'block';
+
+setTimeout(resetReturnForm, 500);
         }
     });
 }

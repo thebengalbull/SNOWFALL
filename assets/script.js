@@ -4075,7 +4075,7 @@ if (nextBtn) {
                 return;
             }
             
-            const returnNumber = 'RET-' + Math.floor(10000000 + Math.random() * 90000000);
+          const returnNumber = 'RET-' + Math.floor(10000000 + Math.random() * 90000000);
 document.getElementById('return-request-number').textContent = returnNumber;
 
 // Get customer info from the order
@@ -4083,53 +4083,6 @@ const orders = JSON.parse(localStorage.getItem('completed-orders')) || [];
 const originalOrder = orders.find(o => o.orderNumber === selectedReturnOrder.number);
 
 // Get return items and amounts
-const returnItemsList = [];
-let totalRefund = 0;
-
-document.querySelectorAll('[class^="return-qty-"]').forEach(select => {
-    const qty = parseInt(select.value);
-    if (qty > 0) {
-        const price = parseFloat(select.getAttribute('data-price'));
-        const itemName = select.closest('.return-item').querySelector('h4').textContent;
-        returnItemsList.push({
-            name: itemName,
-            quantity: qty,
-            price: price,
-            total: price * qty
-        });
-        totalRefund += price * qty;
-    }
-});
-
-const returnType = localStorage.getItem('returnType') || '30day';
-const returnFee = returnType === '7day' ? 30 : 5.99;
-const totalRefundWithFee = totalRefund - returnFee;
-
-// Prepare return details for email
-const returnDetails = {
-    returnNumber: returnNumber,
-    orderNumber: selectedReturnOrder.number,
-    customerName: originalOrder?.customerName || 'Customer',
-    customerEmail: originalOrder?.customerEmail || '',
-    customerPhone: originalOrder?.customerPhone || '',
-    returnDate: new Date().toLocaleString(),
-    items: returnItemsList.map(item => `${item.name} x${item.quantity} - $${item.total.toFixed(2)}`).join(', '),
-    reason: document.getElementById('return-reason-select').options[document.getElementById('return-reason-select').selectedIndex]?.text || 'Not specified',
-    comments: document.getElementById('return-comments').value || 'No additional comments',
-    refundAmount: `$${totalRefund.toFixed(2)}`,
-    returnFee: `$${returnFee.toFixed(2)}`,
-    totalRefund: `$${totalRefundWithFee.toFixed(2)}`,
-    returnType: returnType === '7day' ? '7-Day Return (€30 fee)' : '30-Day Return ($5.99 fee)',
-    shippingAddress: originalOrder?.shippingAddress || 'Address not available'
-};
-
-// Customer info for email
-const customerInfo = {
-    email: originalOrder?.customerEmail || '',
-    name: originalOrder?.customerName || 'Customer'
-};
-
-// Prepare return items list for email
 const returnItemsForEmail = [];
 let totalRefundAmount = 0;
 
@@ -4155,7 +4108,7 @@ const returnDetailsForEmail = {
     returnNumber: returnNumber,
     returnDate: new Date().toLocaleString(),
     returnItemsList: returnItemsForEmail,
-    totalRefund: `$${finalRefund.toFixed(2)}`,
+    totalRefund: `${returnType === '7day' ? '€' : '$'}${finalRefund.toFixed(2)}`,
     returnType: returnType === '7day' ? '7-Day Return' : '30-Day Return',
     reason: document.getElementById('return-reason-select').options[document.getElementById('return-reason-select').selectedIndex]?.text || 'Not specified',
     shippingAddress: originalOrder?.shippingAddress || 'Address not available',

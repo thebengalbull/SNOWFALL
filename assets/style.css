@@ -3494,6 +3494,7 @@ body[dir="rtl"] .quick-question {
     color: #ff6b6b;
     margin-top: 5px;
     animation: pulse 1.5s infinite;
+    background: transparent !important;
 }
 
 @keyframes pulse {

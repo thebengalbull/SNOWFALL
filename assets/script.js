@@ -10,8 +10,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ========== EMAILJS EMAIL SENDING FUNCTIONS ==========
 
-// Function to send order confirmation to customer
+ // Function to send order confirmation to customer
 function sendCustomerReceipt(orderDetails, customerEmail, customerName) {
+    console.log('📧 CUSTOMER EMAIL DEBUG:');
+    console.log('  → Email address:', customerEmail);
+    console.log('  → Customer name:', customerName);
+    console.log('  → Order number:', orderDetails.orderNumber);
+    
     let itemsHtml = '';
     orderDetails.items.forEach(item => {
         itemsHtml += `
@@ -40,11 +45,14 @@ function sendCustomerReceipt(orderDetails, customerEmail, customerName) {
     
     return emailjs.send('snowfall_shop', 'template_wlu3spp', templateParams)
         .then(function(response) {
-            console.log('Customer receipt sent!', response.status);
+            console.log('✅ CUSTOMER EMAIL SENT SUCCESSFULLY to:', customerEmail);
+            console.log('  → Status:', response.status);
             return true;
         })
         .catch(function(error) {
-            console.error('Failed to send customer receipt:', error);
+            console.error('❌ FAILED to send customer email to:', customerEmail);
+            console.error('  → Error:', error);
+            console.error('  → Error text:', error.text);
             return false;
         });
 }

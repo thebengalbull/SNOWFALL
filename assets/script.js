@@ -4,7 +4,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ========== EMAILJS INITIALIZATION ==========
 (function() {
-    emailjs.init("5g9Si30AG9AQZmtIJ"); // Your actual Public Key
+    emailjs.init("5g9Si30AG9AQZmtIJ");
+    // Force emailjs to work on mobile
+    if (typeof emailjs.setTransportType === 'function') {
+        emailjs.setTransportType('fetch');
+    }
 })();
 
 

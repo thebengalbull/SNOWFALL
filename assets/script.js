@@ -160,14 +160,14 @@ function sendReturnAdminNotification(returnDetails) {
     itemsHtml += `
         <tr>
             <td colspan="4" style="padding: 10px; background-color: #fff3cd;">
-                <strong>🔴 RETURN REASON:</strong> ${returnDetails.reason}<br>
-                <strong>💬 CUSTOMER COMMENTS:</strong> ${returnDetails.comments || 'No comments'}
+                <strong> RETURN REASON:</strong> ${returnDetails.reason}<br>
+                <strong> CUSTOMER COMMENTS:</strong> ${returnDetails.comments || 'No comments'}
             </td>
         </tr>
         <tr>
             <td colspan="4" style="padding: 10px; background-color: #ffebee;">
-                <strong>💰 REFUND AMOUNT:</strong> ${returnDetails.totalRefund}<br>
-                <strong>📦 RETURN TYPE:</strong> ${returnDetails.returnType}
+                <strong> REFUND AMOUNT:</strong> ${returnDetails.totalRefund}<br>
+                <strong> RETURN TYPE:</strong> ${returnDetails.returnType}
             </td>
         </tr>
     `;

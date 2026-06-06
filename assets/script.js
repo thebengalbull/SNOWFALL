@@ -32,7 +32,7 @@ function sendCustomerReceipt(orderDetails, customerEmail, customerName) {
     const templateParams = {
         to_email: customerEmail,
         to_name: customerName,
-        order_number: orderDetails.orderNumber,
+        order_number: `🛍️ NEW ORDER #${orderDetails.orderNumber} 🛍️`,
         order_date: orderDetails.orderDate,
         order_total: orderDetails.total,
         shipping_address: orderDetails.shippingAddress,
@@ -73,7 +73,7 @@ function sendAdminNotification(orderDetails) {
     
     const templateParams = {
         to_email: 'kawsar2783@gmail.com',
-        order_number: orderDetails.orderNumber,
+        order_number: `🛍️ NEW ORDER #${orderDetails.orderNumber} 🛍️`,
         customer_name: orderDetails.customerName,
         customer_email: orderDetails.customerEmail,
         customer_phone: orderDetails.customerPhone,

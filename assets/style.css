@@ -4075,7 +4075,7 @@ body[dir="rtl"] .quick-question {
 .hand-pointer {
     position: fixed;
     top: 15px;
-    left: 15px;
+    right: 15px;
     z-index: 9999;
     animation: handWave 1.5s ease-in-out infinite;
     pointer-events: none;
@@ -4086,15 +4086,16 @@ body[dir="rtl"] .quick-question {
     font-size: 3rem;
     color: #ff6b6b;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-    transform: rotate(-15deg);
+    transform: rotate(15deg);
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
 }
 
 @keyframes handWave {
     0%, 100% {
-        transform: translateX(0) rotate(-15deg);
+        transform: translateX(0) rotate(15deg);
     }
     50% {
-        transform: translateX(-10px) rotate(-5deg);
+        transform: translateX(10px) rotate(5deg);
     }
 }
 
@@ -4103,49 +4104,52 @@ body[dir="rtl"] .quick-question {
     content: "☰";
     position: absolute;
     top: 50px;
-    left: 10px;
+    right: 10px;
+    left: auto;
     font-size: 2rem;
     font-weight: bold;
     color: #3498db;
     background: white;
-    padding: 5px 10px;
-    border-radius: 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    animation: pulse 1s ease-in-out infinite;
-}
-
-@keyframes pulse {
-    0%, 100% {
-        transform: scale(1);
-        opacity: 0.8;
-    }
-    50% {
-        transform: scale(1.1);
-        opacity: 1;
-    }
-}
-
-/* Text label */
-.hand-pointer-text {
-    position: absolute;
-    top: 100px;
-    left: -20px;
-    background: #ff6b6b;
-    color: white;
     padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: bold;
-    white-space: nowrap;
-    animation: bounce 0.8s ease-in-out infinite;
+    border-radius: 30px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    animation: bouncePointer 0.8s ease-in-out infinite;
 }
 
-@keyframes bounce {
+@keyframes bouncePointer {
     0%, 100% {
         transform: translateY(0);
     }
     50% {
-        transform: translateY(-5px);
+        transform: translateY(-8px);
+    }
+}
+
+/* Text label on the hand */
+.hand-pointer-text {
+    position: absolute;
+    top: 100px;
+    right: -15px;
+    left: auto;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 25px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    white-space: nowrap;
+    animation: pulseText 1s ease-in-out infinite;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+}
+
+@keyframes pulseText {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0.9;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 1;
     }
 }
 
@@ -4156,6 +4160,32 @@ body[dir="rtl"] .quick-question {
     }
 }
 
+/* Small adjustment for very small phones */
+@media (max-width: 480px) {
+    .hand-pointer i {
+        font-size: 2.5rem;
+    }
+    
+    .hand-pointer::after {
+        font-size: 1.5rem;
+        top: 42px;
+        right: 5px;
+        padding: 4px 10px;
+    }
+    
+    .hand-pointer-text {
+        font-size: 0.7rem;
+        top: 85px;
+        right: -20px;
+        padding: 4px 10px;
+        white-space: nowrap;
+    }
+}
+
+/* Hide copy button after copy */
+.copy-btn.copied {
+    display: none !important;
+}
 
 
 

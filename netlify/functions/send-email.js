@@ -1,13 +1,13 @@
 const nodemailer = require('nodemailer');
 
-exports.handler = async (event) => {
+exports.handler = async function(event, context) {
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: 'Method Not Allowed' };
     }
 
     try {
         const { to, subject, message } = JSON.parse(event.body);
-        
+
         const transporter = nodemailer.createTransport({
             host: 'smtp-relay.brevo.com',
             port: 587,
@@ -24,8 +24,15 @@ exports.handler = async (event) => {
             text: message
         });
 
-        return { statusCode: 200, body: JSON.stringify({ success: true }) };
+        return {
+            statusCode: 200,
+            body: JSON.stringify({ success: true })
+        };
     } catch (error) {
-        return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+        console.error('Error:', error);
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ error: error.message })
+        };
     }
 };

@@ -2,101 +2,99 @@
 document.addEventListener('DOMContentLoaded', function() {
     
 
-// ========== EMAILJS INITIALIZATION ==========
-(function() {
-    emailjs.init("5g9Si30AG9AQZmtIJ");
-    // Force emailjs to work on mobile
-    if (typeof emailjs.setTransportType === 'function') {
-        emailjs.setTransportType('fetch');
-    }
-})();
+
 
 
 // ========== EMAILJS EMAIL SENDING FUNCTIONS ==========
-
- // Function to send order confirmation to customer
-function sendCustomerReceipt(orderDetails, customerEmail, customerName) {
-    console.log('📧 CUSTOMER EMAIL DEBUG:');
-    console.log('  → Email address:', customerEmail);
-    console.log('  → Customer name:', customerName);
-    console.log('  → Order number:', orderDetails.orderNumber);
-    
+// Send order confirmation to customer
+async function sendCustomerReceipt(orderDetails, customerEmail, customerName) {
     let itemsHtml = '';
     orderDetails.items.forEach(item => {
-        itemsHtml += `
-            <tr>
-                <td style="padding: 10px; border-bottom: 1px solid #ddd;">${item.name}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: center;">${item.quantity}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">$${item.price.toFixed(2)}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td>
-            </tr>
-        `;
+        itemsHtml += `${item.name} x ${item.quantity} = $${(item.price * item.quantity).toFixed(2)}\n`;
     });
     
-    const templateParams = {
-        to_email: customerEmail,
-        to_name: customerName,
-        order_number: `NEW ORDER #${orderDetails.orderNumber}`,
-        order_date: orderDetails.orderDate,
-        order_total: orderDetails.total,
-        shipping_address: orderDetails.shippingAddress,
-        items_html: itemsHtml,
-        tracking_url: `https://snowfall.com/track?order=${orderDetails.orderNumber}`,
-        support_email: 'support@snowfall.com',
-        company_name: 'SNOWFALL',
-        year: new Date().getFullYear()
-    };
+    const message = `
+🧾 SNOWFALL ORDER CONFIRMATION 🧾
+================================
+
+Order #: ${orderDetails.orderNumber}
+Date: ${orderDetails.orderDate}
+
+Items:
+${itemsHtml}
+
+Total: ${orderDetails.total}
+
+Shipping to:
+${orderDetails.shippingAddress}
+
+Track your order: ${orderDetails.tracking_url}
+
+Thank you for shopping at SNOWFALL!
+    `;
     
-    return emailjs.send('snowfall_shop', 'template_wlu3spp', templateParams)
-        .then(function(response) {
-            console.log('✅ CUSTOMER EMAIL SENT SUCCESSFULLY to:', customerEmail);
-            console.log('  → Status:', response.status);
-            return true;
-        })
-        .catch(function(error) {
-            console.error('❌ FAILED to send customer email to:', customerEmail);
-            console.error('  → Error:', error);
-            console.error('  → Error text:', error.text);
-            return false;
+    try {
+        const response = await fetch('/.netlify/functions/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                to: customerEmail,
+                subject: `Order Confirmed #${orderDetails.orderNumber}`,
+                message: message
+            })
         });
+        const result = await response.json();
+        console.log('✅ Email sent to:', customerEmail);
+        return result.success;
+    } catch (error) {
+        console.error('❌ Failed:', error);
+        return false;
+    }
 }
 
-// Function to send admin notification (you receive)
-function sendAdminNotification(orderDetails) {
+// Send admin notification
+async function sendAdminNotification(orderDetails) {
     let itemsHtml = '';
     orderDetails.items.forEach(item => {
-        itemsHtml += `
-            <tr>
-                <td style="padding: 10px; border-bottom: 1px solid #ddd;">${item.name}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: center;">${item.quantity}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">$${item.price.toFixed(2)}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td>
-            </tr>
-        `;
+        itemsHtml += `${item.name} x${item.quantity} = $${(item.price * item.quantity).toFixed(2)}\n`;
     });
     
-    const templateParams = {
-        to_email: 'kawsar2783@gmail.com',
-        order_number: `NEW ORDER #${orderDetails.orderNumber}`,
-        customer_name: orderDetails.customerName,
-        customer_email: orderDetails.customerEmail,
-        customer_phone: orderDetails.customerPhone,
-        order_date: orderDetails.orderDate,
-        order_total: orderDetails.total,
-        items_html: itemsHtml,
-        shipping_address: orderDetails.shippingAddress,
-        payment_method: orderDetails.paymentMethod
-    };
+    const message = `
+🔔 NEW ORDER RECEIVED! 🔔
+
+Order #: ${orderDetails.orderNumber}
+Customer: ${orderDetails.customerName}
+Email: ${orderDetails.customerEmail}
+Phone: ${orderDetails.customerPhone}
+
+Items:
+${itemsHtml}
+
+Total: ${orderDetails.total}
+
+Payment: ${orderDetails.paymentMethod}
+
+Shipping Address:
+${orderDetails.shippingAddress}
+    `;
     
-    return emailjs.send('snowfall_shop', 'template_2nxtcpx', templateParams)
-        .then(function(response) {
-            console.log('Admin notification sent!', response.status);
-            return true;
-        })
-        .catch(function(error) {
-            console.error('Failed to send admin notification:', error);
-            return false;
+    try {
+        const response = await fetch('/.netlify/functions/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                to: "kawsar2783@gmail.com",
+                subject: `NEW ORDER #${orderDetails.orderNumber}`,
+                message: message
+            })
         });
+        const result = await response.json();
+        console.log('✅ Admin notification sent');
+        return result.success;
+    } catch (error) {
+        console.error('❌ Failed:', error);
+        return false;
+    }
 }
 
 // Main function to send both emails

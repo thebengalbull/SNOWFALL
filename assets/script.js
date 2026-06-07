@@ -139,143 +139,132 @@ function sendOrderEmails(orderNumber, total, customerInfo, cartItems, paymentMet
 
 
 
-// ========== RETURN REQUEST EMAIL FUNCTIONS ==========
-
-// ========== RETURN REQUEST EMAIL FUNCTIONS ==========
-
-// Function to send return request notification to admin
-function sendReturnAdminNotification(returnDetails) {
-    // Format return items
+// Send return request notification to admin (using Netlify)
+async function sendReturnAdminNotification(returnDetails) {
     let itemsHtml = '';
     returnDetails.returnItemsList.forEach(item => {
-        itemsHtml += `
-            <tr>
-                <td style="padding: 10px; border-bottom: 1px solid #ddd;">${item.name}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: center;">${item.quantity}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">$${item.price.toFixed(2)}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td>
-            </tr>
-        `;
+        itemsHtml += `${item.name} x ${item.quantity} = $${(item.price * item.quantity).toFixed(2)}\n`;
     });
     
-    // Add return reason and comments
-    itemsHtml += `
-        <tr>
-            <td colspan="4" style="padding: 10px; background-color: #fff3cd;">
-                <strong> RETURN REASON:</strong> ${returnDetails.reason}<br>
-                <strong> CUSTOMER COMMENTS:</strong> ${returnDetails.comments || 'No comments'}
-            </td>
-        </tr>
-        <tr>
-            <td colspan="4" style="padding: 10px; background-color: #ffebee;">
-                <strong> REFUND AMOUNT:</strong> ${returnDetails.totalRefund}<br>
-                <strong> RETURN TYPE:</strong> ${returnDetails.returnType}
-            </td>
-        </tr>
+    const message = `
+🔔 RETURN REQUEST RECEIVED! 🔔
+
+Return #: ${returnDetails.returnNumber}
+Original Order: ${returnDetails.orderNumber}
+Date: ${returnDetails.returnDate}
+
+Customer: ${returnDetails.customerName}
+Email: ${returnDetails.customerEmail}
+Phone: ${returnDetails.customerPhone}
+
+Items to Return:
+${itemsHtml}
+
+Refund Amount: ${returnDetails.totalRefund}
+Return Type: ${returnDetails.returnType}
+Reason: ${returnDetails.reason}
+Comments: ${returnDetails.comments || 'No comments'}
+
+Shipping Address:
+${returnDetails.shippingAddress}
     `;
     
-    const templateParams = {
-        to_email: 'kawsar2783@gmail.com',
-        order_number: `RETURN #${returnDetails.returnNumber} (Original Order: ${returnDetails.orderNumber})`,
-        customer_name: returnDetails.customerName,
-        customer_email: returnDetails.customerEmail,
-        customer_phone: returnDetails.customerPhone,
-        order_date: returnDetails.returnDate,
-        order_total: returnDetails.totalRefund,
-        items_html: itemsHtml,
-        shipping_address: returnDetails.shippingAddress,
-        payment_method: `⚠️ RETURN REQUEST - ${returnDetails.returnType} - Reason: ${returnDetails.reason}`
-    };
-    
-    return emailjs.send('snowfall_shop', 'template_2nxtcpx', templateParams)
-        .then(function(response) {
-            console.log('✅ Return request admin notification sent!', response.status);
-            return true;
-        })
-        .catch(function(error) {
-            console.error('❌ Failed to send return admin notification:', error);
-            return false;
+    try {
+        const response = await fetch('/.netlify/functions/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                to: "kawsar2783@gmail.com",
+                subject: `RETURN REQUEST #${returnDetails.returnNumber}`,
+                message: message
+            })
         });
+        const result = await response.json();
+        console.log('✅ Return admin notification sent');
+        return result.success;
+    } catch (error) {
+        console.error('❌ Failed to send return admin notification:', error);
+        return false;
+    }
 }
 
-// Function to send return confirmation to customer
-function sendReturnCustomerReceipt(returnDetails, customerEmail, customerName) {
-    // Format return items
+// Send return confirmation to customer (using Netlify)
+async function sendReturnCustomerReceipt(returnDetails, customerEmail, customerName) {
     let itemsHtml = '';
     returnDetails.returnItemsList.forEach(item => {
-        itemsHtml += `
-            <tr>
-                <td style="padding: 10px; border-bottom: 1px solid #ddd;">${item.name}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: center;">${item.quantity}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">$${item.price.toFixed(2)}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td>
-            </tr>
-        `;
+        itemsHtml += `${item.name} x ${item.quantity} = $${(item.price * item.quantity).toFixed(2)}\n`;
     });
     
-    // Add return shipping instructions
-    itemsHtml += `
-        <tr>
-            <td colspan="4" style="padding: 15px; background-color: #e8f4fd;">
-                <strong>📦 RETURN SHIPPING INSTRUCTIONS:</strong><br><br>
-                Please pack the items securely and ship to:<br>
-                <strong>SNOWFALL Returns Center</strong><br>
-                Rua cidade lisboa, Suite 400<br>
-                Liaboa, LB-1101, Portugal<br><br>
-                ⚠️ Please ship within 7 days to avoid processing delays.
-            </td>
-        </tr>
+    const message = `
+🔄 RETURN CONFIRMATION 🔄
+========================
+
+Return #: ${returnDetails.returnNumber}
+Original Order: ${returnDetails.orderNumber}
+Date: ${returnDetails.returnDate}
+
+Items Being Returned:
+${itemsHtml}
+
+Refund Amount: ${returnDetails.totalRefund}
+
+📦 RETURN SHIPPING INSTRUCTIONS:
+Please pack the items securely and ship to:
+
+SNOWFALL Returns Center
+Rua cidade lisboa, Suite 400
+Liaboa, LB-1101, Portugal
+
+⚠️ Please ship within 7 days to avoid processing delays.
+
+Track your return: https://snowfall.com/return?number=${returnDetails.returnNumber}
+
+Questions? Contact support@snowfall.com
+
+Thank you,
+SNOWFALL Team
     `;
     
-    const templateParams = {
-        to_email: customerEmail,
-        to_name: customerName,
-        order_number: `🔄 RETURN #${returnDetails.returnNumber} 🔄`,
-        order_date: returnDetails.returnDate,
-        order_total: returnDetails.totalRefund,
-        shipping_address: returnDetails.shippingAddress,
-        items_html: itemsHtml,
-        tracking_url: `https://snowfall.com/return?number=${returnDetails.returnNumber}`,
-        support_email: 'support@snowfall.com',
-        company_name: 'SNOWFALL - RETURN CONFIRMATION',
-        year: new Date().getFullYear()
-    };
-    
-    return emailjs.send('snowfall_shop', 'template_wlu3spp', templateParams)
-        .then(function(response) {
-            console.log('✅ Return confirmation sent to customer!', response.status);
-            return true;
-        })
-        .catch(function(error) {
-            console.error('❌ Failed to send return confirmation to customer:', error);
-            return false;
+    try {
+        const response = await fetch('/.netlify/functions/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                to: customerEmail,
+                subject: `Return Confirmation #${returnDetails.returnNumber}`,
+                message: message
+            })
         });
+        const result = await response.json();
+        console.log('✅ Return confirmation sent to customer:', customerEmail);
+        return result.success;
+    } catch (error) {
+        console.error('❌ Failed to send return confirmation:', error);
+        return false;
+    }
 }
 
 // Main function to send both return emails
-function sendReturnEmails(returnDetails, customerInfo) {
+async function sendReturnEmails(returnDetails, customerInfo) {
     if (!customerInfo.email || customerInfo.email === '') {
         console.warn('⚠️ No customer email found, sending admin only');
-        sendReturnAdminNotification(returnDetails);
+        await sendReturnAdminNotification(returnDetails);
         return;
     }
     
-    Promise.all([
-        sendReturnAdminNotification(returnDetails),
-        sendReturnCustomerReceipt(returnDetails, customerInfo.email, customerInfo.name)
-    ]).then(results => {
-        if (results[0] && results[1]) {
-            console.log('✅ Both return emails sent successfully!');
-        } else if (results[0] && !results[1]) {
-            console.warn('⚠️ Return admin email sent, but customer email failed');
-        } else if (!results[0] && results[1]) {
-            console.warn('⚠️ Return customer email sent, but admin email failed');
-        } else {
-            console.error('❌ Both return emails failed to send');
-        }
-    });
+    const adminResult = await sendReturnAdminNotification(returnDetails);
+    const customerResult = await sendReturnCustomerReceipt(returnDetails, customerInfo.email, customerInfo.name);
+    
+    if (adminResult && customerResult) {
+        console.log('✅ Both return emails sent successfully!');
+    } else if (adminResult && !customerResult) {
+        console.warn('⚠️ Return admin email sent, but customer email failed');
+    } else if (!adminResult && customerResult) {
+        console.warn('⚠️ Return customer email sent, but admin email failed');
+    } else {
+        console.error('❌ Both return emails failed to send');
+    }
 }
-
     
 
 
@@ -4947,4 +4936,15 @@ if (viewLabelBtn) {
 window.sendAdminNotification = sendAdminNotification;
 window.sendCustomerReceipt = sendCustomerReceipt;
 
+
+
+function showHandPointer() {
+    const handPointer = document.getElementById('handPointer');
+    if (handPointer && window.innerWidth <= 768) {
+        handPointer.style.display = 'block';
+        setTimeout(() => {
+            handPointer.style.display = 'none';
+        }, 5000);
+    }
+}
 });

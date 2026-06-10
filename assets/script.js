@@ -2618,7 +2618,16 @@ function sendReturnEmails(returnDetails, customerInfo) {
         });
     }
     
-    // ========== CART FUNCTIONALITY ==========
+    
+   
+   
+   
+   
+   
+   
+   
+   
+   // ========== CART FUNCTIONALITY ==========
     const cartCount = document.querySelector('.cart-count');
     const cartItemsContainer = document.getElementById('cart-items');
     const cartTotalElement = document.getElementById('cart-total');
@@ -2709,7 +2718,7 @@ function sendReturnEmails(returnDetails, customerInfo) {
                 <td colspan="5" class="empty-cart-message">
                     <i class="fas fa-shopping-cart"></i>
                     <p>${translations[currentLang]['cart-title']} ${translations[currentLang]['is-empty'] || 'is empty'}</p>
-                </td>
+                 </td>
             `;
             cartItemsContainer.appendChild(emptyRow);
         } else {
@@ -2792,44 +2801,77 @@ function sendReturnEmails(returnDetails, customerInfo) {
         });
     }
     
-    document.querySelectorAll('.cart-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const productName = this.getAttribute('data-product');
-            const productPrice = parseFloat(this.getAttribute('data-price'));
-            const productCard = this.closest('.product-card');
-            const productImage = productCard ? productCard.querySelector('.product-image').src : '';
+    // ===== FIXED: Function to re-attach cart buttons (for dynamically loaded products) =====
+    function attachCartButtonEvents() {
+        document.querySelectorAll('.cart-btn').forEach(button => {
+            // Remove existing listener by cloning to avoid duplicates
+            const newButton = button.cloneNode(true);
+            button.parentNode.replaceChild(newButton, button);
             
-            if (productStock[productName] <= 0) {
-                alert('This product is out of stock!');
-                return;
-            }
-            
-            const existingItemIndex = cart.findIndex(item => item.name === productName);
-            
-            if (existingItemIndex !== -1) {
-                if (productStock[productName] > 0) {
-                    cart[existingItemIndex].quantity += 1;
-                    productStock[productName]--;
-                } else {
-                    alert('Cannot add more - out of stock!');
+            newButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const productName = this.getAttribute('data-product');
+                const productPrice = parseFloat(this.getAttribute('data-price'));
+                const productCard = this.closest('.product-card');
+                const productImage = productCard ? productCard.querySelector('.product-image').src : '';
+                
+                if (productStock[productName] <= 0) {
+                    alert('This product is out of stock!');
                     return;
                 }
-            } else {
-                cart.push({
-                    name: productName,
-                    price: productPrice,
-                    image: productImage,
-                    quantity: 1
-                });
-                productStock[productName] = (productStock[productName] || 4) - 1;
-            }
-            
-            updateStockUI();
-            updateCartDisplay();
-            
-            const currentLang = localStorage.getItem('preferred-language') || 'en';
-            showToast(`${productName} ${translations[currentLang]['add-to-cart'] || 'added to cart'}!`);
+                
+                const existingItemIndex = cart.findIndex(item => item.name === productName);
+                
+                if (existingItemIndex !== -1) {
+                    if (productStock[productName] > 0) {
+                        cart[existingItemIndex].quantity += 1;
+                        productStock[productName]--;
+                    } else {
+                        alert('Cannot add more - out of stock!');
+                        return;
+                    }
+                } else {
+                    cart.push({
+                        name: productName,
+                        price: productPrice,
+                        image: productImage,
+                        quantity: 1
+                    });
+                    productStock[productName] = (productStock[productName] || 4) - 1;
+                }
+                
+                updateStockUI();
+                updateCartDisplay();
+                
+                const currentLang = localStorage.getItem('preferred-language') || 'en';
+                showToast(`${productName} ${translations[currentLang]['add-to-cart'] || 'added to cart'}!`);
+            });
         });
+    }
+    
+    // Run initial attachment
+    attachCartButtonEvents();
+    
+    // Re-attach when category changes (products load dynamically)
+    document.querySelectorAll('.category-list li').forEach(category => {
+        category.addEventListener('click', function() {
+            setTimeout(attachCartButtonEvents, 200);
+        });
+    });
+    
+    // Also re-attach when products container becomes visible
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                setTimeout(attachCartButtonEvents, 100);
+            }
+        });
+    });
+    
+    document.querySelectorAll('.category-products').forEach(container => {
+        observer.observe(container, { attributes: true });
     });
     
     if (continueShoppingBtn) {
@@ -2868,16 +2910,6 @@ function sendReturnEmails(returnDetails, customerInfo) {
             }, 100);
         });
     }
-    
-   
-   
-   
-   
-   
-   
-   
-   
-   
    
    
    

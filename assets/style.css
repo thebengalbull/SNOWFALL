@@ -4583,7 +4583,16 @@ body[dir="rtl"] .quick-question {
 
 
 
-
+.scroll-indicator::after {
+    content: " CLICK HERE";
+    display: block;
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: #ff6b6b;
+    margin-top: 5px;
+    animation: pulse 1.5s infinite;
+    background: transparent;
+}
 
 
 
